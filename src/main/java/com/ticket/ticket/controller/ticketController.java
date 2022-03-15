@@ -9,14 +9,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import org.json.JSONObject;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.json.JSONException;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -37,23 +30,35 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.ticket.ticket.data.MyData;
+@CrossOrigin("*")
 @RestController
-public class ticketController {
+public class TicketController{
 
     
-        @GetMapping("/tickets")
-        @CrossOrigin(origins = "http://localhost:4200")
-        public ResponseEntity<String>  filterTickets(String apiToken, String apiEndpoint) throws IOException, URISyntaxException {
+    	public List<JSONObject> response;
+    	@RequestMapping(value ="/tickets" , method = RequestMethod.GET,  produces="application/json")
+        public ResponseEntity<MyData> filterTickets(String apiToken, String apiEndpoint) throws JSONException, IOException, URISyntaxException {
 
-             apiToken ="8aSc0OaA8vlBBjCLVxw9";
-             apiEndpoint ="https://bostestthesis.freshdesk.com";
+             apiToken ="YzT7GcwChrQGTHZRTTAG";
+             apiEndpoint ="https://prototypthesis.freshdesk.com";
             // filterQuery ="id";
         
         
         final HttpClientBuilder hcBuilder = HttpClientBuilder.create();
         final RequestBuilder reqBuilder = RequestBuilder.get();
         final RequestConfig.Builder rcBuilder = RequestConfig.custom();
+        
         
         // URL object from API endpoint:
         URL url = new URL(apiEndpoint + "/api/v2/tickets");
@@ -99,28 +104,80 @@ public class ticketController {
         while((line=br.readLine())!=null) {
             sb.append(line);
         }
+        
         int response_status = response.getStatusLine().getStatusCode();
         String response_body = sb.toString();
-
+        JSONArray response_json = new JSONArray(response_body);
+      /*  List<String> listdata = new ArrayList<String>(); 
+       
+        
+        
+        if (response_json != null) { 
+            for (int i=0;i< response_json.length();i++){ 
+            	//response_json.getJSONArray(i);
+             listdata.add(response_json.getString(i));
+            } 
+         } */
+        
+        
+        List<JSONObject> list = new ArrayList();
+        for (int i = 0; i < response_json.length();list.add(response_json.getJSONObject(i++)));
+        
+        String   liste =  list.toString();
+        
+        MyData data = new MyData(null, liste);
+        
+        
+        
+        
+        
+        
+        
+       
+     /*   
+        public static JSONArray convert(Collection<Object> list)
+        {
+            return new JSONArray(list);
+        }
+*/
+        
+            
+       // List<JSONObject> list = response_json.stream().map(o -> (JSONObject) o).collect(Collectors.toList());
+       
+      
+        //ArrayList<String> listdata = new ArrayList<String>();     
+        /*JSONArray jArray = (JSONArray) jsonObject; 
+        if (jArray != null) { 
+           for (int i=0;i<jArray.length();i++){ 
+            listdata.add(jArray.getString(i));
+           } 
+        }*/ 
+        
+        
         System.out.println("Response Status: "+ response_status);
         System.out.println("Body:\n");
         System.out.println(response_body);
+       
+       //System.out.println("Ticket ID: " + response_json.get("id"));
+        //this.response = response_json;
+       // List<JSONObject> list = data.stream().map(o -> (JSONObject) o).collect(Collectors.toList());
         if(response_status > 400) {
             System.out.println("X-Request-Id: " + response.getFirstHeader("x-request-id").getValue());
         }
         else if(response_status==201){ 
             //For creation response_status is 201 where are as for other actions it is 200
-            try{
                 System.out.println("Ticket Creation Successfull");
                 //Creating JSONObject for the response string
-                JSONObject response_json = new JSONObject(sb.toString());
-                System.out.println("Ticket ID: " + response_json.get("id"));
+                //JSONObject response_json = new JSONObject(sb.toString());
+                //JSONArray response_json = new JSONArray(sb.toString());
+                
+                //this.response = response_json;
+                //System.out.println("Ticket ID: " + response_json.get("id"));
                 System.out.println("Location : " + response.getFirstHeader("location").getValue());
-            }
-            catch(JSONException e){
-                System.out.println("Error in JSON Parsing\n :"+ e);
-            }
+                return  new ResponseEntity<MyData>(data,  HttpStatus.CREATED);
+
         }
-        return  new ResponseEntity<>(response_body, HttpStatus.OK); //response_status;
+        return  new ResponseEntity<MyData>(data, HttpStatus.CREATED);
+        //return ; //response_status;
     }
 }
